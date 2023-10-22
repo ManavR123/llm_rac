@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from hnswlib import Index as HnswIndex  # pylint: disable=no-name-in-module
 from sentence_transformers import SentenceTransformer
+from tqdm import tqdm
 
 INDEX_FILE_NAME = "index.bin"
 METADATA_FILE_NAME = "metadata.json"
@@ -64,7 +65,9 @@ class ANN:
                 output_dim=model.get_sentence_embedding_dimension(),
             ),
         )
-        for i in range(0, len(embedding_items), batch_size):
+        for i in tqdm(
+            range(0, len(embedding_items), batch_size), desc="Building index", total=len(embedding_items) // batch_size
+        ):
             items = embedding_items.iloc[i : i + batch_size]
             texts = [item["text"] for _, item in items.iterrows()]
             labels = [item["label"] for _, item in items.iterrows()]

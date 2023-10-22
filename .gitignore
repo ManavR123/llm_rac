@@ -3,3 +3,4 @@ venv/
 outputs/
 *.csv
 __pycache__/
+prompt.txt

@@ -15,7 +15,7 @@ from tqdm import tqdm
 from rac.ann import ANN
 from rac.llm import OpenAIClient
 from rac.model_utils import train_model
-from rac.rac import LLMRAC, RAC, LLMRACData
+from rac.rac import LLMRAC, RAC, LLMRACData, RACData
 
 
 class SizeInfo(NamedTuple):
@@ -42,7 +42,7 @@ def eval_on_data(test_data: pd.DataFrame, rac: RAC) -> EvalResults:
     """Evaluate a RAC on a dataset."""
     correct = 0
     predictions = []
-    for _, row in tqdm(test_data.iterrows(), total=len(test_data)):
+    for _, row in tqdm(test_data.iterrows(), total=len(test_data), desc="Evaluating"):
         prediction = rac.predict(row["text"])
         predictions.append(prediction)
         if prediction == row["label"]:
@@ -69,10 +69,10 @@ def eval_model(
     """Evaluate a model as a RAC and LLMRAC"""
     pretrained_index = ANN.build_index_from_data(train_df, model, size_info.max_index_size, size_info.batch_size)
 
-    rac = RAC(model, pretrained_index)
+    rac = RAC(model, pretrained_index, RACData(k=3, min_score=0.0))
 
     llm_client = OpenAIClient(os.environ["OPENAI_API_KEY"], model_name="gpt-3.5-turbo")
-    llm_rac_data = LLMRACData(k=5, min_score=0.0, instructions=load_prompt(prompt_path))
+    llm_rac_data = LLMRACData(k=3, min_score=0.0, instructions=load_prompt(prompt_path))
     llm_rac = LLMRAC.from_rac(rac, llm_client, llm_rac_data)
 
     eval_log_and_print_rac_results(test_df, rac, f"{prefix}_rac_predictions")
